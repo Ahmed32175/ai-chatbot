@@ -1,47 +1,59 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import io from 'socket.io-client';
 
 const SpeechRecognitionComponent = () => {
 
+const[recognition, setRecognition] = useState('');
+const [text, setText] = useState('');
+const [replyText, setReplyText] = useState('');
+
 useEffect(() => {
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-const recognition = new SpeechRecognition();
+const recognitionInstance = new SpeechRecognition();
 const socket = io('http://localhost:5000', {
   transports: ['websocket', 'polling', 'flashsocket']
 });
 
-recognition.lang = 'en-US';
-recognition.interimResults = false;
+recognitionInstance.lang = 'en-US';
+recognitionInstance.interimResults = false;
 
-const butt = document.querySelector('button');
-butt.addEventListener('click', () => {
-    recognition.start();
-});
+setRecognition(recognitionInstance);
 
-recognition.addEventListener('result', (e) => {
+recognitionInstance.addEventListener('result', (e) => {
     let last = e.results.length - 1;
-    let text = e.results[last][0].transcript;
-    console.log(text);
+    let saidText = e.results[last][0].transcript;
+    console.log(saidText);
     console.log('Confidence: ' + e.results[0][0].confidence);
-    socket.emit('chat message', text);
+    setText(saidText);
+    socket.emit('chat message', saidText);
 
   });
 
-  function synthVoice(text) {
+  function handleReply(reply) {
+    setReplyText(reply);
     const synth = window.speechSynthesis;
     const utterance = new SpeechSynthesisUtterance();
-    utterance.text = text;
+    utterance.text = reply;
     synth.speak(utterance);
   }
   
-  socket.on('bot reply', function(replyText) {
-    synthVoice(replyText);
-  });
+  socket.on('bot reply', handleReply);
+  
 }, []);
+
+function startChat() {
+  if(recognition){
+    recognition.start();
+  }
+  
+}
+
   return (
     <div>
-      <button>Chat</button>
+      <button onClick={startChat}>Chat</button>
+      <p class = 'chat'>You: {text}</p>
+      <p class = 'chat'>ChatterBot: {replyText}</p>
     </div>
   );
 };

@@ -88,3 +88,10 @@ button:focus {
 .fa-github::before {
     content: "\f09b";
 }
+.chat{
+  display: flex;
+  font-size: 20px;
+  justify-content: center;
+  align-items: center;
+
+}
